@@ -1,12 +1,58 @@
-.App{
+.App {
   display: flex;
   width: 100%;
   height: 100vh;
   background: rgb(0, 0, 10);
   justify-content: center;
 }
-#home{
-  width: 480px;
+#home {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+#home {
+  display: flex; 
+}
+#user-info {
+  display: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+#giveaway {
+  display: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+#referral {
+  display: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+#task {
+  display: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   height: 100%;
 }
 nav {
@@ -14,6 +60,8 @@ nav {
   width: 100%;
   height: 10%;
   align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 .user-logo {
   width: 50px;
@@ -26,22 +74,15 @@ nav {
 .user-logo img {
   width: 100%;
   height: 100%;
-}
-#user-info {
-  display: none;
-  flex-direction: column;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgb(0, 0, 10);
-  justify-content: center;
-  align-items: center;
+  border-radius: 50%;
 }
 .user-about {
-  width: 480px;
+  width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 480px;
 }
 .user-photo{
   display: flex;
@@ -56,29 +97,14 @@ nav {
   border-radius: 50%;
   background: rgb(100, 100, 100);
 }
-.first-name{
+.first-name, .last-name, .username {
   display: flex;
   width: 100%;
   height: 10%;
   justify-content: space-evenly;
   align-items: center;
   color: white;
-}
-.last-name{
-  display: flex;
-  width: 100%;
-  height: 10%;
-  justify-content: space-evenly;
-  align-items: center;
-  color: white;
-}
-.username{
-  display: flex;
-  width: 100%;
-  height: 10%;
-  justify-content: space-evenly;
-  align-items: center;
-  color: white;
+  flex-wrap: wrap;
 }
 .space1{
   display: flex;
@@ -95,6 +121,7 @@ footer{
   align-items: center;
   color: gray;
   background: rgb(100, 100, 100, 0.1);
+  box-sizing: border-box;
 }
 .fa-solid{
   font-size: 25px;
@@ -148,7 +175,7 @@ nav h3{
 }
 .community-link{
   display: flex;
-  width: 100%;
+  width: 90%;
   height: 75%;
   background: rgb(100, 100, 100, 0.25);
   border-radius: 10px;
@@ -158,6 +185,8 @@ nav h3{
   color: white;
   font-size: 20px;
   margin: 5px;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 .fa-users{
   font-size: 20px;
@@ -167,47 +196,6 @@ nav h3{
 }
 .community-link .fa-angle-right{
   margin-left: 80px;
-}
-#giveaway{
-  display: none;
-  width: 100%;
-  height: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: rgba(0, 0, 10);
-  align-items: center;
-  justify-content: center;
-}
-.giveaway, .task{
-  width: 480px;
-  height: 100%;
-}
-#referral{
-  display: none;
-  width: 100%;
-  height: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: rgba(0, 0, 10);
-  align-items: center;
-  justify-content: center;
-}
-#task{
-  display: none ;
-  width: 100%;
-  height: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: rgba(0, 0, 10);
-  align-items: center;
-  justify-content: center;
-}
-.referral{
-  width: 480px;
-  height: 100%;
 }
 .referral-link{
   display: flex;
@@ -221,13 +209,15 @@ nav h3{
   border-radius: 5px;
   height: 50%;
   font-size: 20px;
-  background: white;
+  background: gray;
   border: none;
+  padding: 0 10px;
 }
 .ref-input:focus{
   outline: none;
 }
 .copy-btn{
+  display: flex;
   width: 20%;
   height: 50%;
   background: dodgerblue;
@@ -236,6 +226,11 @@ nav h3{
   border-radius: 5px;
   cursor: pointer;
   margin-left: 10px;
+  align-items: center;
+  justify-content: center;
+}
+.copy-btn i{
+  font-size: 20px;
 }
 #copytext{
   display: none;
@@ -251,13 +246,15 @@ nav h3{
   transition: 1.5s;
   margin-top: 5%;
   margin-left: 1%;
+  text-align: center;
 }
 .task-list{
   display: flex;
+  flex-direction: column;
   width: 100%;
   height: 70%;
-  align-items: start;
-  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 .task-item1{
   display: flex;
@@ -267,6 +264,8 @@ nav h3{
   border-radius: 7.5px;
   align-items: center;
   justify-content: space-between;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 .icons{
   display: flex;
@@ -300,6 +299,15 @@ nav h3{
   cursor: pointer;
   margin-right: 7px;
 }
+.claim-btn:disabled {
+    background-color: rgba(100, 100, 100, 0.5);
+    color: rgb(0, 0, 10);
+    cursor: not-allowed;
+}
+.user-about, .giveaway, .referral, .task {
+  width: 480px;
+  height: 100%;
+}
 @keyframes opa {
   0% {
     opacity: 0;
@@ -309,23 +317,24 @@ nav h3{
   }
   50% {
     opacity: 1;
-    margin-top: 10%;
+    transform: translateY(-20px);
   }
   60% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    margin-top: 10%;
+    transform: translateY(-20px);
   }
 }
 @media (max-width: 400px) {
-  #home {
-    width: 100%;
+  nav {
+    padding: 0 10px;
   }
   .community-link {
     width: 90%;
     font-size: 16px;
+    padding: 0 5px;
   }
   .community-link div {
     margin-right: 10px;
@@ -334,22 +343,15 @@ nav h3{
     margin-left: 50px;
   }
   .connect-wallet {
-    width: 35%;
+    width: 45%;
     height: 40%;
   }
   .connect-wallet p {
     font-size: 12px;
   }
-  #user-info, #giveaway, #referral, #task {
-    width: 100%;
-  }
   .user-logo {
     width: 40px;
     height: 40px;
-  }
-  .user-logo img {
-    width: 100%;
-    height: 100%;
   }
   #copytext {
     width: 80%;
@@ -360,19 +362,28 @@ nav h3{
   }
   .ref-input {
     width: 70%;
-    height: 40%;
-    font-size: 16px; 
+    height: 60%;
+    font-size: 20px; 
   }
   .copy-btn {
     width: 30%;
-    height: 45%;
+    height: 60%;
     font-size: 14px;
+    border-radius: 5px;
+  }
+  .copy-btn i {
+    font-size: 18px;
   }
   .referral-link {
     width: 90%;
     height: 80%;
     align-items: center; 
     justify-content: center;
+  }
+  .check-btn, .claim-btn {
+    width: 20%;
+    height: 50%;
+    font-size: 14px;
   }
   @keyframes opa {
   0% {

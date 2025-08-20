@@ -1,7 +1,6 @@
-// App.js
 import './App.css';
 import { useEffect, useState } from "react";
-import { addUser, getUser, updateUser, addReferralReward } from "./services/firestore";
+import { addUser, getUser, updateUser, updateUserTask, addReferralReward } from "./services/firestore";
 import { initAuth } from "./firebase";  
 
 function App() {
@@ -12,7 +11,6 @@ function App() {
   const [balance, setBalance] = useState(0);
 
   useEffect(() => {
-
     initAuth();
 
     const tg = window.Telegram.WebApp;
@@ -21,9 +19,8 @@ function App() {
     if (tg.initDataUnsafe?.user) {
       const tgUser = tg.initDataUnsafe.user;
       setUser(tgUser);
-      setUserId(tgUser.id);
+      setUserId(tgUser.id.toString());
 
-      // 🔥 Firestore’da userni yaratish yoki olish
       async function loadUser() {
         await addUser(tgUser.id.toString(), {
           firstname: tgUser.first_name,
@@ -38,16 +35,19 @@ function App() {
         const dbUser = await getUser(tgUser.id.toString());
         if (dbUser) {
           setBalance(dbUser.balance || 0);
+          const joinTask = dbUser.task?.[0];
+          if (joinTask) {
+            setClicked(joinTask.completed);
+          }
         }
       }
 
       loadUser();
 
-      // 🔹 Referral bo‘lsa uni yozib qo‘yish
       const urlParams = new URLSearchParams(window.location.search);
       const refId = urlParams.get("startapp")?.replace("ref", "");
       if (refId && refId !== tgUser.id.toString()) {
-        addReferralReward(refId, tgUser.id.toString()); 
+        addReferralReward(refId); 
       }
     }
   }, []);
@@ -55,7 +55,7 @@ function App() {
   const checkMembership = () => {
     if (!userId) return;
 
-    const BOT_TOKEN = "8280702108:AAH2Q2jcYODiImoTfLdQKlKSZL7qk091ehA"; // ⚠️ o‘zingizniki qo‘ying
+    const BOT_TOKEN = "8280702108:AAH2Q2jcYODiImoTfLdQKlKSZL7qk091ehA";
     const CHANNEL = "@haresog";
 
     fetch(
@@ -78,73 +78,60 @@ function App() {
   };
 
   const claim = async () => {
-    if (!userId) return;
+    if (!userId || clicked) return;
 
     const reward = 5000;
     const newBalance = balance + reward;
     setBalance(newBalance);
     setClicked(true);
 
-    // 🔥 Firestore’da balance yangilash
-    await updateUser(userId.toString(), {
-      balance: newBalance,
-      task: [{ id: "join_channel", completed: true, reward }]
+    await updateUserTask(userId, 0, {
+      id: "join_channel",
+      completed: true,
+      reward
     });
+    
+    await updateUser(userId, { balance: newBalance });
   };
 
   const userInfo = () => {
-    const userINfo = document.getElementById('user-info');
-    userINfo.style.display = "flex";
-    const referral = document.getElementById('referral');
-    referral.style.display = "none";
-    const giveaway = document.getElementById('giveaway');
-    giveaway.style.display = "none";
-    const task = document.getElementById('task');
-    task.style.display = "none";
+    document.getElementById('user-info').style.display = "flex";
+    document.getElementById('home').style.display = "none";
+    document.getElementById('referral').style.display = "none";
+    document.getElementById('giveaway').style.display = "none";
+    document.getElementById('task').style.display = "none";
   }
 
   function home(){
-    const userINfo = document.getElementById('user-info');
-    userINfo.style.display = "none";
-    const giveaway = document.getElementById('giveaway');
-    giveaway.style.display = "none";
-    const referral = document.getElementById('referral');
-    referral.style.display = "none";
-    const task = document.getElementById('task');
-    task.style.display = "none";
+    document.getElementById('home').style.display = "flex";
+    document.getElementById('user-info').style.display = "none";
+    document.getElementById('giveaway').style.display = "none";
+    document.getElementById('referral').style.display = "none";
+    document.getElementById('task').style.display = "none";
   }
 
-  function giveaway(){
-    const userINfo = document.getElementById('user-info');
-    userINfo.style.display = "none";
-    const giveaway = document.getElementById('giveaway');
-    giveaway.style.display = "flex";
-    const referral = document.getElementById('referral');
-    referral.style.display = "none";
-    const task = document.getElementById('task');
-    task.style.display = "none";
+  function giveawayHandler(){
+    document.getElementById('home').style.display = "none";
+    document.getElementById('user-info').style.display = "none";
+    document.getElementById('giveaway').style.display = "flex";
+    document.getElementById('referral').style.display = "none";
+    document.getElementById('task').style.display = "none";
   }
 
   function refer(){
-    const userINfo = document.getElementById('user-info');
-    userINfo.style.display = "none";
-    const giveaway = document.getElementById('giveaway');
-    giveaway.style.display = "none";
-    const referral = document.getElementById('referral');
-    referral.style.display = "flex";
-    const task = document.getElementById('task');
-    task.style.display = "none";
+    document.getElementById('home').style.display = "none";
+    document.getElementById('user-info').style.display = "none";
+    document.getElementById('giveaway').style.display = "none";
+    document.getElementById('referral').style.display = "flex";
+    document.getElementById('task').style.display = "none";
   }
 
   function task(){
-    const userINfo = document.getElementById('user-info');
-    userINfo.style.display = "none";
-    const giveaway = document.getElementById('giveaway');
-    giveaway.style.display = "none";
-    const referral = document.getElementById('referral');
-    referral.style.display = "none";
-    const task = document.getElementById('task');
-    task.style.display = "flex";
+    document.getElementById('home').style.display = "none";
+    document.getElementById('user-info').style.display = "none";
+    document.getElementById('giveaway').style.display = "none";
+    document.getElementById('referral').style.display = "none";
+    document.getElementById('task').style.display = "flex";
   }
 
   function copy() {
@@ -153,7 +140,7 @@ function App() {
       .then(() => {
         const copytext = document.getElementById('copytext');
         copytext.style.display = "flex";
-        copytext.style.animation = " 1.5s ease opa";
+        copytext.style.animation = "opa 1.5s ease";
         setTimeout(() => {
           copytext.style.display = "none";
         }, 1500); 
@@ -181,7 +168,7 @@ function App() {
           <h3>{user ? user.username : "Not set!"}</h3>
         </nav>
         <div className='space1'>
-          <button className='connect-wallet' onClick={connectWallet}><i class="fa-solid fa-wallet"></i> <p>Connect wallet</p></button>
+          <button className='connect-wallet' onClick={connectWallet}><i className="fa-solid fa-wallet"></i> <p>Connect wallet</p></button>
         </div>
         <div className='space2'>
           <img src='/hare.png' alt='hare logo' className='logo'/>
@@ -192,16 +179,16 @@ function App() {
         </div>
         <div className='space1'></div>
         <div className='space1'>
-          <a href='https://t.me/haresog' className='community-link'><div><i class="fa-solid fa-users"></i> Join our community</div> <i class="fa-solid fa-angle-right"></i></a>
+          <a href='https://t.me/haresog' className='community-link'><div><i className="fa-solid fa-users"></i> Join our community</div> <i className="fa-solid fa-angle-right"></i></a>
         </div>
         <div className='space1'></div>
         <div className='space1'></div>
         <div className='space1'></div>
         <footer>
-            <i class="fa-solid fa-house dodgerblue" onClick={home}></i>
-            <i class="fa-solid fa-hand-holding-dollar" onClick={giveaway}></i>
-            <i class="fa-solid fa-user-group" onClick={refer}></i>
-            <i class="fa-solid fa-list-check" onClick={task}></i>
+            <i className="fa-solid fa-house dodgerblue" onClick={home}></i>
+            <i className="fa-solid fa-hand-holding-dollar" onClick={giveawayHandler}></i>
+            <i className="fa-solid fa-user-group" onClick={refer}></i>
+            <i className="fa-solid fa-list-check" onClick={task}></i>
           </footer>
       </div>
       <div id='user-info'>
@@ -230,10 +217,10 @@ function App() {
           <div className='space1'></div>
           <div className='space1'></div>
           <footer>
-            <i class="fa-solid fa-house" onClick={home}></i>
-            <i class="fa-solid fa-hand-holding-dollar" onClick={giveaway}></i>
-            <i class="fa-solid fa-user-group" onClick={refer}></i>
-            <i class="fa-solid fa-list-check" onClick={task}></i>
+            <i className="fa-solid fa-house" onClick={home}></i>
+            <i className="fa-solid fa-hand-holding-dollar" onClick={giveawayHandler}></i>
+            <i className="fa-solid fa-user-group" onClick={refer}></i>
+            <i className="fa-solid fa-list-check" onClick={task}></i>
           </footer>
         </div>
       </div>
@@ -258,10 +245,10 @@ function App() {
           <div className='space1'></div>
           <div className='space1'></div>
           <footer>
-            <i class="fa-solid fa-house" onClick={home}></i>
-            <i class="fa-solid fa-hand-holding-dollar dodgerblue" onClick={giveaway}></i>
-            <i class="fa-solid fa-user-group" onClick={refer}></i>
-            <i class="fa-solid fa-list-check" onClick={task}></i>
+            <i className="fa-solid fa-house" onClick={home}></i>
+            <i className="fa-solid fa-hand-holding-dollar dodgerblue" onClick={giveawayHandler}></i>
+            <i className="fa-solid fa-user-group" onClick={refer}></i>
+            <i className="fa-solid fa-list-check" onClick={task}></i>
           </footer>
         </div>
       </div>
@@ -285,7 +272,7 @@ function App() {
             <div className='referral-link'>
               <input type='text' value={`https://t.me/HARESOG_bot/hares?startapp=ref${user ? user.id : "unknown"}`} readOnly className='ref-input' />
               <button className='copy-btn' onClick={copy}>
-                <i class="fa-solid fa-copy"></i> Copy
+                <i className="fa-solid fa-copy"></i> Copy
               </button>
             </div>
           </div>
@@ -296,10 +283,10 @@ function App() {
           <div className='space1'></div>
           <div className='space1'></div>
           <footer>
-            <i class="fa-solid fa-house" onClick={home}></i>
-            <i class="fa-solid fa-hand-holding-dollar" onClick={giveaway}></i>
-            <i class="fa-solid fa-user-group dodgerblue" onClick={refer}></i>
-            <i class="fa-solid fa-list-check" onClick={task}></i>
+            <i className="fa-solid fa-house" onClick={home}></i>
+            <i className="fa-solid fa-hand-holding-dollar" onClick={giveawayHandler}></i>
+            <i className="fa-solid fa-user-group dodgerblue" onClick={refer}></i>
+            <i className="fa-solid fa-list-check" onClick={task}></i>
           </footer>
         </div>
       </div>
@@ -319,19 +306,20 @@ function App() {
           <div className='task-list'>
             <div className='task-item1'>
               <div className='icons'>
-                <i class="fa-brands fa-telegram"></i>
+                <i className="fa-brands fa-telegram"></i>
               </div>
               <h3 style={{color: 'white', marginRight: 'auto'}}>+5000</h3>
                 {isMember === true && (
                   <button
                     className="claim-btn"
                     onClick={claim}
+                    disabled={clicked}
                     style={{
                     color: clicked ? "rgb(0, 0, 10)" : "white",
                     backgroundColor: clicked ? "rgba(100, 100, 100, 0.5)" : "dodgerblue",
                     }}
                   >
-                    Claim
+                    {clicked ? "Claimed" : "Claim"}
                   </button>
                 )}
                 {isMember === false && (
@@ -342,10 +330,10 @@ function App() {
             </div>
           </div>
           <footer>
-            <i class="fa-solid fa-house" onClick={home}></i>
-            <i class="fa-solid fa-hand-holding-dollar" onClick={giveaway}></i>
-            <i class="fa-solid fa-user-group" onClick={refer}></i>
-            <i class="fa-solid fa-list-check dodgerblue" onClick={task}></i>
+            <i className="fa-solid fa-house" onClick={home}></i>
+            <i className="fa-solid fa-hand-holding-dollar" onClick={giveawayHandler}></i>
+            <i className="fa-solid fa-user-group" onClick={refer}></i>
+            <i className="fa-solid fa-list-check dodgerblue" onClick={task}></i>
           </footer>
         </div>
       </div>
