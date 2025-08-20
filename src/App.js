@@ -1,6 +1,8 @@
+// App.js
 import './App.css';
 import { useEffect, useState } from "react";
-import { addUser, getUser, updateUser } from "./services/firestore"; // 🔑 Firestore funksiyalari
+import { addUser, getUser, updateUser, addReferralReward } from "./services/firestore";
+import { initAuth } from "./firebase";  
 
 function App() {
   const [user, setUser] = useState(null);
@@ -10,6 +12,9 @@ function App() {
   const [balance, setBalance] = useState(0);
 
   useEffect(() => {
+
+    initAuth();
+
     const tg = window.Telegram.WebApp;
     tg.ready();
 
@@ -26,6 +31,7 @@ function App() {
           username: tgUser.username || "",
           photo: tgUser.photo_url || "",
           balance: 0,
+          referrals: 0,
           task: [{ id: "join_channel", completed: false, reward: 5000 }]
         });
 
@@ -36,13 +42,20 @@ function App() {
       }
 
       loadUser();
+
+      // 🔹 Referral bo‘lsa uni yozib qo‘yish
+      const urlParams = new URLSearchParams(window.location.search);
+      const refId = urlParams.get("startapp")?.replace("ref", "");
+      if (refId && refId !== tgUser.id.toString()) {
+        addReferralReward(refId, tgUser.id.toString()); 
+      }
     }
   }, []);
 
   const checkMembership = () => {
     if (!userId) return;
 
-    const BOT_TOKEN = "TOKENINGIZNI_QO'YING";
+    const BOT_TOKEN = "8280702108:AAH2Q2jcYODiImoTfLdQKlKSZL7qk091ehA"; // ⚠️ o‘zingizniki qo‘ying
     const CHANNEL = "@haresog";
 
     fetch(
@@ -79,29 +92,76 @@ function App() {
     });
   };
 
-  function userInfo() { showPage("user-info"); }
-  function home() { showPage("home"); }
-  function giveaway() { showPage("giveaway"); }
-  function refer() { showPage("referral"); }
-  function task() { showPage("task"); }
+  const userInfo = () => {
+    const userINfo = document.getElementById('user-info');
+    userINfo.style.display = "flex";
+    const referral = document.getElementById('referral');
+    referral.style.display = "none";
+    const giveaway = document.getElementById('giveaway');
+    giveaway.style.display = "none";
+    const task = document.getElementById('task');
+    task.style.display = "none";
+  }
 
-  function showPage(id) {
-    ["home", "user-info", "giveaway", "referral", "task"].forEach(page => {
-      const el = document.getElementById(page);
-      if (el) el.style.display = page === id ? "flex" : "none";
-    });
+  function home(){
+    const userINfo = document.getElementById('user-info');
+    userINfo.style.display = "none";
+    const giveaway = document.getElementById('giveaway');
+    giveaway.style.display = "none";
+    const referral = document.getElementById('referral');
+    referral.style.display = "none";
+    const task = document.getElementById('task');
+    task.style.display = "none";
+  }
+
+  function giveaway(){
+    const userINfo = document.getElementById('user-info');
+    userINfo.style.display = "none";
+    const giveaway = document.getElementById('giveaway');
+    giveaway.style.display = "flex";
+    const referral = document.getElementById('referral');
+    referral.style.display = "none";
+    const task = document.getElementById('task');
+    task.style.display = "none";
+  }
+
+  function refer(){
+    const userINfo = document.getElementById('user-info');
+    userINfo.style.display = "none";
+    const giveaway = document.getElementById('giveaway');
+    giveaway.style.display = "none";
+    const referral = document.getElementById('referral');
+    referral.style.display = "flex";
+    const task = document.getElementById('task');
+    task.style.display = "none";
+  }
+
+  function task(){
+    const userINfo = document.getElementById('user-info');
+    userINfo.style.display = "none";
+    const giveaway = document.getElementById('giveaway');
+    giveaway.style.display = "none";
+    const referral = document.getElementById('referral');
+    referral.style.display = "none";
+    const task = document.getElementById('task');
+    task.style.display = "flex";
   }
 
   function copy() {
     const input = document.querySelector('.ref-input');
-    navigator.clipboard.writeText(input.value).then(() => {
-      const copytext = document.getElementById('copytext');
-      copytext.style.display = "flex";
-      copytext.style.animation = "1.5s ease opa";
-      setTimeout(() => {
-        copytext.style.display = "none";
-      }, 1500);
-    });
+    navigator.clipboard.writeText(input.value)
+      .then(() => {
+        const copytext = document.getElementById('copytext');
+        copytext.style.display = "flex";
+        copytext.style.animation = " 1.5s ease opa";
+        setTimeout(() => {
+          copytext.style.display = "none";
+        }, 1500); 
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+        alert('Failed to copy referral link.');
+      });
   }
 
   function connectWallet() {
@@ -114,34 +174,35 @@ function App() {
       <div id="home">
         <nav>
           <button className='user-logo' onClick={userInfo}>
-            {user?.photo_url && <img src={user.photo_url} alt="User" />}
+            {user && user.photo_url && (
+              <img src={user.photo_url} alt="User picture" />
+            )}
           </button>
           <h3>{user ? user.username : "Not set!"}</h3>
         </nav>
         <div className='space1'>
-          <button className='connect-wallet' onClick={connectWallet}>
-            <i class="fa-solid fa-wallet"></i> <p>Connect wallet</p>
-          </button>
+          <button className='connect-wallet' onClick={connectWallet}><i class="fa-solid fa-wallet"></i> <p>Connect wallet</p></button>
         </div>
         <div className='space2'>
-          <img src='/hare.png' alt='hare logo' className='logo' />
+          <img src='/hare.png' alt='hare logo' className='logo'/>
         </div>
         <div className='balance'>
-          <h1 className='white'>{balance}</h1>
+          <h1 className='white' id='balance'>{balance}</h1>
           <h3 className='white'>HARES</h3>
         </div>
         <div className='space1'></div>
         <div className='space1'>
-          <a href='https://t.me/haresog' className='community-link'>
-            <div><i class="fa-solid fa-users"></i> Join our community</div> <i class="fa-solid fa-angle-right"></i>
-          </a>
+          <a href='https://t.me/haresog' className='community-link'><div><i class="fa-solid fa-users"></i> Join our community</div> <i class="fa-solid fa-angle-right"></i></a>
         </div>
+        <div className='space1'></div>
+        <div className='space1'></div>
+        <div className='space1'></div>
         <footer>
-          <i class="fa-solid fa-house dodgerblue" onClick={home}></i>
-          <i class="fa-solid fa-hand-holding-dollar" onClick={giveaway}></i>
-          <i class="fa-solid fa-user-group" onClick={refer}></i>
-          <i class="fa-solid fa-list-check" onClick={task}></i>
-        </footer>
+            <i class="fa-solid fa-house dodgerblue" onClick={home}></i>
+            <i class="fa-solid fa-hand-holding-dollar" onClick={giveaway}></i>
+            <i class="fa-solid fa-user-group" onClick={refer}></i>
+            <i class="fa-solid fa-list-check" onClick={task}></i>
+          </footer>
       </div>
       <div id='user-info'>
         <div className='user-about'>
@@ -222,7 +283,7 @@ function App() {
           <div id='copytext'>Referral link copied to clipboard</div>
           <div className='space1'>
             <div className='referral-link'>
-              <input type='text' value={`https://t.me/your_bot/hares?startapp=ref${user ? user.id : "unknown"}`} readOnly className='ref-input' />
+              <input type='text' value={`https://t.me/HARESOG_bot/hares?startapp=ref${user ? user.id : "unknown"}`} readOnly className='ref-input' />
               <button className='copy-btn' onClick={copy}>
                 <i class="fa-solid fa-copy"></i> Copy
               </button>
@@ -246,7 +307,9 @@ function App() {
         <div className='task'>
           <nav>
             <button className='user-logo' onClick={userInfo}>
-              {user?.photo_url && <img src={user.photo_url} alt="User" />}
+              {user && user.photo_url && (
+                <img src={user.photo_url} alt="User picture" />
+              )}
             </button>
             <h3>{user ? user.username : "Not set!"}</h3>
           </nav>
@@ -258,23 +321,24 @@ function App() {
               <div className='icons'>
                 <i class="fa-brands fa-telegram"></i>
               </div>
-              <h3 style={{ color: 'white', marginRight: 'auto' }}>+5000</h3>
-              {isMember ? (
-                <button
-                  className="claim-btn"
-                  onClick={claim}
-                  style={{
+              <h3 style={{color: 'white', marginRight: 'auto'}}>+5000</h3>
+                {isMember === true && (
+                  <button
+                    className="claim-btn"
+                    onClick={claim}
+                    style={{
                     color: clicked ? "rgb(0, 0, 10)" : "white",
                     backgroundColor: clicked ? "rgba(100, 100, 100, 0.5)" : "dodgerblue",
-                  }}
-                >
-                  Claim
-                </button>
-              ) : (
-                <button className='check-btn' onClick={checkMembership}>
-                  check
-                </button>
-              )}
+                    }}
+                  >
+                    Claim
+                  </button>
+                )}
+                {isMember === false && (
+                  <button className='check-btn' onClick={checkMembership}>
+                    check
+                  </button>
+                )}
             </div>
           </div>
           <footer>
